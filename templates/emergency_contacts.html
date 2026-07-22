@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Emergency Contacts</title>
+</head>
+<body>
+    <h1>Emergency Contacts</h1>
+    <ul>
+        {% for contact in contacts %}
+        <li>{{ contact.name }}: {{ contact.number }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

@@ -1,0 +1,20 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Databases
+*.db
+*.sqlite3
+
+# Uploaded voice evidence clips
+static/uploads/*
+!static/uploads/.gitkeep
+
+# Environment variables & secrets
+.env
+secret.key
+
+# OS generated files
+.DS_Store
+Thumbs.db

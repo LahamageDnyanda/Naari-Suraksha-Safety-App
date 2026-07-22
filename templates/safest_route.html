@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Safest Route</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    <script src="https://cdn.jsdelivr.net/gh/python-visualization/folium@main/folium/templates/leaflet_heat.min.js"></script>
+    <style>
+        /* ... your CSS ... */
+        html, body { height: 100%; margin: 0; padding: 0; }
+        #mapid { height: 70vh; width: 100%; }
+        #controls { padding: 20px; text-align: center; background-color: #f8f8f8; }
+        input[type=text] { padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-right: 10px; width: 60%; max-width: 300px; }
+        button { padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        #route-info { margin-top: 15px; font-weight: bold; }
+        #mapid { width: 100%; height: 500px; } /* Ensure map div has dimensions */
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <h1>Safest Route</h1>
+        <p>Enter your destination:</p>
+        <form method="POST" action="/safest_route">
+            <input type="text" id="destination" name="destination" placeholder="Enter destination">
+            <button type="submit">Find Safest Route</button>
+        </form>
+        {% if route_info %}
+        <p id="route-info">{{ route_info }}</p>
+        {% endif %}
+    </div>
+    <div id="mapid">
+        {{ map_html|safe }}
+    </div>
+    
+    <div style="padding: 20px; background-color: #fff; border-top: 1px solid #ddd; max-width: 600px; margin: 20px auto; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-family: sans-serif;">
+        <h3 style="margin-top: 0; color: #d32f2f; font-size: 1.4em; font-weight: bold;"><span style="color: #c62828;">🚨</span> Report a Safety Hazard</h3>
+        <p style="color: #666; font-size: 0.95em; margin-bottom: 15px;">Spot a dark alley, low lighting, or potential hazard? Submit it below to update the community safety map instantly.</p>
+        <form method="POST" action="/report_unsafe" style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; gap: 15px;">
+                <div style="flex: 1;">
+                    <label for="report_lat" style="display: block; font-weight: bold; margin-bottom: 5px; color: #444; font-size: 0.9em;">Latitude</label>
+                    <input type="number" step="any" id="report_lat" name="lat" required placeholder="e.g. 16.8524" value="{{ session.get('user_lat', '') }}" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+                </div>
+                <div style="flex: 1;">
+                    <label for="report_lon" style="display: block; font-weight: bold; margin-bottom: 5px; color: #444; font-size: 0.9em;">Longitude</label>
+                    <input type="number" step="any" id="report_lon" name="lon" required placeholder="e.g. 74.5815" value="{{ session.get('user_lon', '') }}" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+                </div>
+            </div>
+            <div>
+                <label for="report_desc" style="display: block; font-weight: bold; margin-bottom: 5px; color: #444; font-size: 0.9em;">Hazard Description</label>
+                <input type="text" id="report_desc" name="description" required placeholder="e.g. Broken street light, dark tunnel" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+            </div>
+            <div>
+                <label for="report_intensity" style="display: block; font-weight: bold; margin-bottom: 5px; color: #444; font-size: 0.9em;">Danger Level (1 = Low, 10 = High)</label>
+                <input type="number" min="1" max="10" id="report_intensity" name="intensity" required placeholder="e.g. 7" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+            </div>
+            <button type="submit" style="background-color: #d32f2f; color: white; padding: 10px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; transition: background-color 0.2s;">Submit Report</button>
+        </form>
+    </div>
+</body>
+</html>

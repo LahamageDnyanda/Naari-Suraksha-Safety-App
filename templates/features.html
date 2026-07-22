@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Naari Suraksha - Choose a Feature</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha512-Fo3rlrZj/k7ujTnHg4CGR2D7kSs0v4LLanw2qksYuRlEzO+tcaEPQogQ0KaoGN26/zrn20ImR1DfuLWnOo7aBA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background: linear-gradient(135deg, #fff1f8, #fce4ec); /* Soft pink gradient - consistent */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+            color: #333;
+        }
+
+        .container {
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.15);
+            max-width: 500px;
+            width: 90%;
+        }
+
+        h1 {
+            color: #e91e63; /* Vibrant pink - consistent */
+            font-size: 2.8em;
+            margin-bottom: 30px;
+            letter-spacing: 1px;
+        }
+
+        .feature-button {
+            background-color: #007bff; /* Primary blue */
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease-in-out;
+            text-decoration: none;
+            margin-bottom: 20px;
+            width: 80%;
+            max-width: 300px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .feature-button:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+
+        .feature-icon {
+            font-size: 1.5em;
+        }
+
+        /* Subtle animation */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .container {
+            animation: fadeInUp 0.5s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Choose a Feature</h1>
+        <button class="feature-button" onclick="window.location.href='/sos'">
+            <i class="fas fa-exclamation-triangle feature-icon"></i> SOS Alert
+        </button>
+        <button class="feature-button" onclick="window.location.href='/safest_route'">
+            <i class="fas fa-route feature-icon"></i> Safest Route
+        </button>
+        <button class="feature-button" onclick="window.location.href='/emergency_contacts'">
+            <i class="fas fa-phone-alt feature-icon"></i> Emergency Contacts
+        </button>
+        <button class="feature-button" onclick="window.location.href='/risk'">
+            <i class="fas fa-shield-alt feature-icon"></i> Risk Timer
+        </button>
+
+        <div style="margin-top: 30px; border-top: 1px solid #ddd; padding-top: 20px; text-align: center;">
+            <p style="color: #666; font-size: 0.9em; font-weight: bold; margin-bottom: 10px;">
+                <i class="fab fa-bluetooth" style="color: #007bff;"></i> Bluetooth Wearable Panic Emulator
+            </p>
+            <button id="wearable-btn" class="feature-button" style="background-color: #28a745; margin-bottom: 0; width: 80%; max-width: 300px;">
+                <i class="fas fa-stopwatch"></i> Simulate Wearable Panic
+            </button>
+            <p id="wearable-status" style="margin-top: 12px; font-size: 0.85em; color: #555; font-style: italic; min-height: 1.2em;"></p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('wearable-btn').addEventListener('click', () => {
+            const btn = document.getElementById('wearable-btn');
+            const status = document.getElementById('wearable-status');
+            btn.disabled = true;
+            status.textContent = "📡 Searching for Naari Suraksha Smart Band...";
+            status.style.color = "#007bff";
+            
+            setTimeout(() => {
+                status.textContent = "⚡ Bluetooth Panic Signal received! Dispatched SOS Alert.";
+                status.style.color = "#dc3545";
+                
+                // Post to SOS API to register the trigger
+                fetch('/sos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ spoken_word: 'danger' })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    setTimeout(() => {
+                        window.location.href = '/sos';
+                    }, 1200);
+                });
+            }, 1800);
+        });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js" integrity="sha512-yFjLbHHugv1yRqHc7iFCSzu0Klnc9l7ntflibdQPIAT/SD+PbywCc2DbshJkhnUrEpCB6TwYhGUjhlKH6AYpg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</body>
+</html>

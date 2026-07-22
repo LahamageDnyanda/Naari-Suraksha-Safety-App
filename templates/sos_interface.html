@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SOS Voice Detection</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f9f9f9;
+            margin: 0;
+            padding: 40px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #c62828;
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        p {
+            font-size: 1.2em;
+            color: #444;
+        }
+
+        #start-btn {
+            background-color: #d32f2f;
+            color: white;
+            padding: 14px 30px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            transition: background 0.3s ease;
+        }
+
+        #start-btn:hover {
+            background-color: #b71c1c;
+        }
+
+        #sos-status {
+            margin-top: 25px;
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+
+        #sos-info {
+            margin-top: 20px;
+            padding: 20px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            display: none;
+            text-align: left;
+        }
+
+        #sos-info p {
+            margin: 6px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚨 SOS Voice Feature</h1>
+    <p>Say a word like <strong>"Help"</strong>, <strong>"Danger"</strong>, <strong>"Emergency"</strong>, etc.</p>
+    <button id="start-btn">🎙️ Start Listening</button>
+    <p id="sos-status">Awaiting input...</p>
+
+    <div id="sos-info">
+        <p><strong>Trigger Word:</strong> <span id="word"></span></p>
+        <p><strong>User:</strong> <span id="user"></span></p>
+        <p><strong>Age:</strong> <span id="age"></span></p>
+        <p><strong>Location:</strong> <span id="location"></span></p>
+        <p><strong>Time:</strong> <span id="timestamp"></span></p>
+        <p><strong>Alert Sent To:</strong> <span id="recipients" style="color: #c62828;"></span></p>
+        <p id="evidence-container" style="display: none;"><strong>Recorded Audio Evidence:</strong> <span id="evidence-link"></span></p>
+    </div>
+
+    <script>
+        const statusDisplay = document.getElementById('sos-status');
+        const sosInfoBox = document.getElementById('sos-info');
+        const button = document.getElementById('start-btn');
+
+        const wordSpan = document.getElementById('word');
+        const userSpan = document.getElementById('user');
+        const ageSpan = document.getElementById('age');
+        const locationSpan = document.getElementById('location');
+        const timestampSpan = document.getElementById('timestamp');
+        const recipientsSpan = document.getElementById('recipients');
+
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = 'en-US';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        let mediaRecorder;
+        let audioChunks = [];
+        let shouldUpload = false;
+
+        button.onclick = () => {
+            if (!navigator.onLine) {
+                statusDisplay.textContent = "📴 Offline Mode: Dispatching SMS coordinates panic alert...";
+                statusDisplay.style.color = "#dc3545";
+                
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const latVal = position.coords.latitude;
+                        const lonVal = position.coords.longitude;
+                        const message = `🚨 NAARI SURAKSHA OFFLINE EMERGENCY ALERT! I am in danger. Coordinates: ${latVal}, ${lonVal}. Please send help!`;
+                        alert("Offline Mode Active!\nYour phone will now open the native messaging app to send a panic SMS to your trusted contact.");
+                        window.location.href = `sms:9876543210?body=${encodeURIComponent(message)}`;
+                    },
+                    (error) => {
+                        const message = `🚨 NAARI SURAKSHA OFFLINE EMERGENCY ALERT! I am in danger. Coordinates not resolved. Please send help!`;
+                        alert("Offline Mode Active!\nYour phone will now open the native messaging app to send a panic SMS to your trusted contact.");
+                        window.location.href = `sms:9876543210?body=${encodeURIComponent(message)}`;
+                    }
+                );
+                return;
+            }
+
+            statusDisplay.textContent = "🎧 Listening for SOS words...";
+            sosInfoBox.style.display = 'none';
+            document.getElementById('evidence-container').style.display = 'none';
+            document.getElementById('evidence-link').innerHTML = '';
+            
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    mediaRecorder.ondataavailable = e => {
+                        audioChunks.push(e.data);
+                    };
+                    mediaRecorder.onstop = () => {
+                        if (shouldUpload) {
+                            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                            uploadEvidence(audioBlob);
+                        }
+                    };
+                    mediaRecorder.start();
+                    recognition.start();
+                })
+                .catch(err => {
+                    console.warn("Could not start audio recording stream: ", err);
+                    recognition.start();
+                });
+        };
+
+        function uploadEvidence(blob) {
+            const formData = new FormData();
+            formData.append('audio', blob, 'evidence.wav');
+            
+            fetch('/upload_audio', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const linkSpan = document.getElementById('evidence-link');
+                    linkSpan.innerHTML = `<a href="${data.filepath}" target="_blank" style="color: #c62828; font-weight: bold;"><i class="fas fa-play-circle"></i> Play Audio Evidence</a>`;
+                    document.getElementById('evidence-container').style.display = 'block';
+                }
+            })
+            .catch(err => {
+                console.error("Failed to upload audio evidence", err);
+            });
+        }
+
+        recognition.onresult = function(event) {
+            const transcript = event.results[0][0].transcript;
+            statusDisplay.textContent = `You said: "${transcript}"`;
+
+            fetch('/sos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ spoken_word: transcript })
+            })
+            .then(res => res.json())
+            .then(data => {
+                statusDisplay.textContent = data.message;
+
+                if (data.is_sos_active && data.details) {
+                    shouldUpload = true;
+                    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                        mediaRecorder.stop();
+                    }
+
+                    alert("🚨 SOS Triggered!");
+                    wordSpan.textContent = data.details.trigger_word || 'N/A';
+                    userSpan.textContent = data.details.user_id || 'N/A';
+                    ageSpan.textContent = data.details.age || 'N/A';
+                    const loc = data.details.location;
+                    locationSpan.textContent = `${loc[0]}, ${loc[1]}`;
+                    timestampSpan.textContent = data.details.timestamp || 'N/A';
+                    recipientsSpan.textContent = data.details.recipients ? data.details.recipients.join(', ') : 'N/A';
+
+                    sosInfoBox.style.display = 'block';
+                } else {
+                    shouldUpload = false;
+                    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                        mediaRecorder.stop();
+                    }
+                    sosInfoBox.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                statusDisplay.textContent = '⚠️ Error processing SOS.';
+                shouldUpload = false;
+                if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                    mediaRecorder.stop();
+                }
+            });
+        };
+
+        recognition.onerror = function(event) {
+            statusDisplay.textContent = `⚠️ Error: ${event.error}`;
+            shouldUpload = false;
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+        };
+
+        window.addEventListener('online', updateConnectionStatus);
+        window.addEventListener('offline', updateConnectionStatus);
+
+        function updateConnectionStatus() {
+            if (navigator.onLine) {
+                statusDisplay.textContent = "Awaiting input...";
+                statusDisplay.style.color = "";
+            } else {
+                statusDisplay.textContent = "📴 Offline Mode: Internet lost. Clicks will trigger emergency SMS.";
+                statusDisplay.style.color = "#dc3545";
+            }
+        }
+        
+        if (!navigator.onLine) {
+            updateConnectionStatus();
+        }
+    </script>
+</body>
+</html>

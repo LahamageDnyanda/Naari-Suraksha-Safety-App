@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Naari Suraksha - Enable Permissions</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha512-Fo3rlrZj/k7ujTnHg4CGR2D7kSs0v4LLanw2qksYuRlEzO+tcaEPQogQ0KaoGN26/zrn20ImR1DfuLWnOo7aBA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background: linear-gradient(135deg, #fff1f8, #fce4ec); /* Soft pink gradient - consistent with landing */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+            color: #333;
+        }
+
+        .container {
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.15);
+            max-width: 500px;
+            width: 90%;
+        }
+
+        h1 {
+            color: #e91e63; /* Vibrant pink - consistent with landing */
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+        }
+
+        p {
+            font-size: 1.1em;
+            color: #555;
+            margin-bottom: 25px;
+        }
+
+        .permission-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            border: 1px solid #eee;
+        }
+
+        .permission-text {
+            font-weight: bold;
+            color: #444;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .permission-status {
+            color: #777;
+            font-style: italic;
+            margin-top: 5px;
+        }
+
+        .enable-button {
+            background-color: #007bff; /* Primary blue */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .enable-button:hover {
+            background-color: #0056b3;
+        }
+
+        #proceed-features {
+            background-color: #ccc; /* Grayed out when disabled */
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            cursor: not-allowed;
+            margin-top: 30px;
+            transition: background-color 0.3s ease, cursor 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #proceed-features:not([disabled]) {
+            background-color: #4CAF50; /* Green when enabled */
+            cursor: pointer;
+        }
+
+        #proceed-features:not([disabled]):hover {
+            background-color: #388E3C;
+        }
+
+        /* Subtle animation */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .container {
+            animation: fadeInUp 0.5s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Enable Permissions</h1>
+        <p>To use all features, please enable the following:</p>
+
+        <div class="permission-item">
+            <span class="permission-text"><i class="fas fa-map-marker-alt"></i> Live Location</span>
+            <button id="enable-location" class="enable-button">
+                <i class="fas fa-check-circle"></i> Enable
+            </button>
+        </div>
+        <p id="location-status" class="permission-status">Location: Not Enabled</p>
+
+        <div class="permission-item">
+            <span class="permission-text"><i class="fas fa-microphone"></i> Microphone</span>
+            <button id="enable-microphone" class="enable-button">
+                <i class="fas fa-check-circle"></i> Enable
+            </button>
+        </div>
+        <p id="microphone-status" class="permission-status">Microphone: Not Enabled</p>
+
+        <button id="proceed-features" class="proceed-button" disabled>
+            <i class="fas fa-arrow-right"></i> Proceed to Features
+        </button>
+    </div>
+
+    <script>
+        let locationEnabled = false;
+        let microphoneEnabled = false;
+
+        document.getElementById('enable-location').addEventListener('click', () => {
+            if (navigator.geolocation) {
+                document.getElementById('location-status').textContent = 'Requesting location...';
+                document.getElementById('location-status').style.color = '';
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        locationEnabled = true;
+                        document.getElementById('location-status').textContent = 'Location: Enabled';
+                        document.getElementById('location-status').style.color = '#388E3C';
+                        document.getElementById('enable-location').disabled = true;
+                        checkPermissions();
+                    },
+                    (error) => {
+                        console.error(error);
+                        let errMsg = 'Location: Permission Denied';
+                        if (error.code === error.POSITION_UNAVAILABLE) errMsg = 'Location: Position Unavailable';
+                        if (error.code === error.TIMEOUT) errMsg = 'Location: Request Timeout';
+                        document.getElementById('location-status').textContent = errMsg;
+                        document.getElementById('location-status').style.color = '#e91e63';
+                    }
+                );
+            } else {
+                document.getElementById('location-status').textContent = 'Location not supported by browser';
+                document.getElementById('location-status').style.color = '#e91e63';
+            }
+        });
+
+        document.getElementById('enable-microphone').addEventListener('click', () => {
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                document.getElementById('microphone-status').textContent = 'Requesting microphone...';
+                document.getElementById('microphone-status').style.color = '';
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then((stream) => {
+                        microphoneEnabled = true;
+                        document.getElementById('microphone-status').textContent = 'Microphone: Enabled';
+                        document.getElementById('microphone-status').style.color = '#388E3C';
+                        document.getElementById('enable-microphone').disabled = true;
+                        // Stop the stream tracks immediately so the microphone indicator doesn't stay on
+                        stream.getTracks().forEach(track => track.stop());
+                        checkPermissions();
+                    })
+                    .catch((error) => {
+                        console.error(error);
+                        document.getElementById('microphone-status').textContent = 'Microphone: Permission Denied';
+                        document.getElementById('microphone-status').style.color = '#e91e63';
+                    });
+            } else {
+                document.getElementById('microphone-status').textContent = 'Microphone not supported by browser';
+                document.getElementById('microphone-status').style.color = '#e91e63';
+            }
+        });
+
+        function checkPermissions() {
+            const proceedButton = document.getElementById('proceed-features');
+            if (locationEnabled && microphoneEnabled) {
+                proceedButton.disabled = false;
+                proceedButton.style.cursor = 'pointer'; // Ensure cursor changes when enabled
+                
+                // Clear previous listeners to avoid duplicates
+                const newProceedButton = proceedButton.cloneNode(true);
+                proceedButton.parentNode.replaceChild(newProceedButton, proceedButton);
+                
+                newProceedButton.addEventListener('click', () => {
+                    newProceedButton.disabled = true;
+                    newProceedButton.textContent = 'Saving Location...';
+                    
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            const lat = position.coords.latitude;
+                            const lon = position.coords.longitude;
+                            
+                            fetch('/save_location', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ lat: lat, lon: lon })
+                            })
+                            .then(() => {
+                                window.location.href = '/features';
+                            })
+                            .catch((err) => {
+                                console.error('Failed to save location', err);
+                                window.location.href = '/features';
+                            });
+                        },
+                        (error) => {
+                            console.error('Failed to get location coordinates', error);
+                            window.location.href = '/features';
+                        }
+                    );
+                });
+            } else {
+                proceedButton.disabled = true;
+                proceedButton.style.cursor = 'not-allowed'; // Indicate it's disabled
+            }
+        }
+
+        async function checkInitialPermissions() {
+            try {
+                if (navigator.permissions && navigator.permissions.query) {
+                    const geoPermission = await navigator.permissions.query({ name: 'geolocation' });
+                    if (geoPermission.state === 'granted') {
+                        locationEnabled = true;
+                        document.getElementById('location-status').textContent = 'Location: Enabled (Already Granted)';
+                        document.getElementById('location-status').style.color = '#388E3C';
+                        document.getElementById('enable-location').disabled = true;
+                    }
+                    
+                    const micPermission = await navigator.permissions.query({ name: 'microphone' }).catch(() => null);
+                    if (micPermission && micPermission.state === 'granted') {
+                        microphoneEnabled = true;
+                        document.getElementById('microphone-status').textContent = 'Microphone: Enabled (Already Granted)';
+                        document.getElementById('microphone-status').style.color = '#388E3C';
+                        document.getElementById('enable-microphone').disabled = true;
+                    }
+                }
+                checkPermissions();
+            } catch (e) {
+                console.warn("Permissions API check failed", e);
+            }
+        }
+
+        // Check if permissions are already active
+        checkInitialPermissions();
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js" integrity="sha512-yFjLbHHugv1yRqHc7iFCSzu0Klnc9l7ntflibdQPIAT/SD+PbywCc2DbshJkhnUrEpCB6TwYhGUjhlKH6AYpg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</body>
+</html>
